@@ -25,9 +25,50 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <ItemGroup />
   <ItemGroup>
-    <Compile Include="Script.ps1" />
+    <Folder Include="common\scripts\" />
+    <Folder Include="LaunchModule\" />
+    <Folder Include="common\" />
+    <Folder Include="s2d\" />
+    <Folder Include="s2d\fileserver\" />
+    <Folder Include="s2d\fileserver\scripts\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="common\scripts\Disable-CredSSP.ps1" />
+    <Compile Include="s2d\fileserver\scripts\New-QuoromFileShare.ps1" />
+    <Compile Include="common\scripts\Set-ADComputerAccountStatus.ps1" />
+    <Compile Include="common\scripts\Enable-CredSSP.ps1" />
+    <Compile Include="common\scripts\Enable-JumboFrames.ps1" />
+    <Compile Include="common\scripts\Install-ADPowerShell.ps1" />
+    <Compile Include="common\scripts\Set-CNOActiveDirectoryPermissions.ps1" />
+    <Compile Include="common\scripts\Set-NetAdapterRss.ps1" />
+    <Compile Include="common\scripts\Set-SmbClient.ps1" />
+    <Compile Include="s2d\fileserver\scripts\Configure-WSFC.ps1" />
+    <Compile Include="common\scripts\Disable-Firewall.ps1" />
+    <Compile Include="Enable-CloudWatchLogs.ps1" />
+    <Compile Include="s2d\fileserver\scripts\Enable-ClusterS2D.ps1" />
+    <Compile Include="s2d\fileserver\scripts\Enable-CSVCache.ps1" />
+    <Compile Include="common\scripts\Initialize-Disks.ps1" />
+    <Compile Include="common\scripts\Install-FileServer.ps1" />
+    <Compile Include="common\scripts\Install-NETFrameworkCore.ps1" />
+    <Compile Include="common\scripts\Install-WMF5.ps1" />
+    <Compile Include="common\scripts\Install-WSFC.ps1" />
+    <Compile Include="Invoke-AWSCommonSetup.ps1" />
+    <Compile Include="common\scripts\Join-Domain.ps1" />
+    <Compile Include="LaunchModule\AWSLaunchModule.psm1" />
+    <Compile Include="s2d\fileserver\scripts\New-FileShare.ps1" />
+    <Compile Include="s2d\fileserver\scripts\New-S2DFileShare.ps1" />
+    <Compile Include="s2d\fileserver\scripts\New-S2DVolume.ps1" />
+    <Compile Include="s2d\fileserver\scripts\Add-WSFCFileServerRole.ps1" />
+    <Compile Include="s2d\fileserver\scripts\New-StoragePool.ps1" />
+    <Compile Include="s2d\fileserver\scripts\Open-WSFCPorts.ps1" />
+    <Compile Include="s2d\fileserver\scripts\Prepare-S2DDisks.ps1" />
+    <Compile Include="common\scripts\Rename-Computer.ps1" />
+    <Compile Include="common\scripts\Restart-Computer.ps1" />
+    <Compile Include="common\scripts\Send-CfnSignal.ps1" />
+    <Compile Include="s2d\fileserver\scripts\Set-ClusterQuorum.ps1" />
+    <Compile Include="s2d\fileserver\scripts\Set-S2DDiskAutoReplace.ps1" />
+    <Compile Include="s2d\fileserver\scripts\Set-S2DTimeout.ps1" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Target Name="Build" />
