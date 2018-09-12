@@ -30,6 +30,34 @@ elseif(-not (Test-Path -Path $Path))
 [System.Collections.Hashtable]$Splat = @{}
 $DomainName = Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty Domain
 
+Function Update-UserName {
+	[CmdletBinding()]
+	Param(
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[System.String]$Username,
+
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[System.String]$DomainName
+	)
+
+	Begin {}
+
+	Process {
+		if (-not $Username.Contains("\"))
+		{
+			$Username = "$($DomainName.Split(".")[0])\$Username"
+		}
+
+		Write-Output -InputObject $Username
+	}
+
+	End {
+
+	}
+}
+
 if ($FullAccess -ne $null -and $FullAccess.Count -gt 0)
 {
 	$Splat.Add("FullAccess", $FullAccess)
@@ -38,8 +66,10 @@ if ($FullAccess -ne $null -and $FullAccess.Count -gt 0)
 
 	foreach ($Item in $FullAccess)
 	{
+		$Identity = Update-UserName -Username $Item -DomainName $DomainName
+
 		[System.Security.AccessControl.FileSystemAccessRule]$Ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule(
-			$Item,
+			$Identity,
 			[System.Security.AccessControl.FileSystemRights]::FullControl,
 			@([System.Security.AccessControl.InheritanceFlags]::ContainerInherit, [System.Security.AccessControl.InheritanceFlags]::ObjectInherit),
 			[System.Security.AccessControl.PropagationFlags]::None,
@@ -59,8 +89,10 @@ if ($ChangeAccess -ne $null -and $ChangeAccess.Count -gt 0)
 
 	foreach ($Item in $ChangeAccess)
 	{
+		$Identity = Update-UserName -Username $Item -DomainName $DomainName
+
 		[System.Security.AccessControl.FileSystemAccessRule]$Ace = New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule(
-			$Item,
+			$Identity,
 			[System.Security.AccessControl.FileSystemRights]::ReadAndExecute,
 			@([System.Security.AccessControl.InheritanceFlags]::ContainerInherit, [System.Security.AccessControl.InheritanceFlags]::ObjectInherit),
 			[System.Security.AccessControl.PropagationFlags]::None,

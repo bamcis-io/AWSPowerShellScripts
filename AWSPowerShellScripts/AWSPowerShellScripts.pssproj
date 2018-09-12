@@ -27,14 +27,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="common\scripts\" />
-    <Folder Include="LaunchModule\" />
     <Folder Include="common\" />
     <Folder Include="s2d\" />
     <Folder Include="s2d\fileserver\" />
     <Folder Include="s2d\fileserver\scripts\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="common\scripts\Add-ADObjectToGroup.ps1" />
     <Compile Include="common\scripts\Disable-CredSSP.ps1" />
+    <Compile Include="common\scripts\New-ADGroup.ps1" />
+    <Compile Include="common\scripts\New-ScheduledTaskAtStartup.ps1" />
     <Compile Include="s2d\fileserver\scripts\New-QuoromFileShare.ps1" />
     <Compile Include="common\scripts\Set-ADComputerAccountStatus.ps1" />
     <Compile Include="common\scripts\Enable-CredSSP.ps1" />
@@ -55,7 +57,6 @@
     <Compile Include="common\scripts\Install-WSFC.ps1" />
     <Compile Include="Invoke-AWSCommonSetup.ps1" />
     <Compile Include="common\scripts\Join-Domain.ps1" />
-    <Compile Include="LaunchModule\AWSLaunchModule.psm1" />
     <Compile Include="s2d\fileserver\scripts\New-FileShare.ps1" />
     <Compile Include="s2d\fileserver\scripts\New-S2DFileShare.ps1" />
     <Compile Include="s2d\fileserver\scripts\New-S2DVolume.ps1" />

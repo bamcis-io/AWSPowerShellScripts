@@ -2,15 +2,25 @@
 Param(
 	[Parameter(Mandatory = $true)]
 	[ValidateNotNullOrEmpty()]
-	[System.String[]]$Nodes,
+	[System.String]$Name,
 
-	[Parameter(Mandatory = $true)]
+	[Parameter()]
 	[ValidateNotNullOrEmpty()]
-	[System.String[]]$IPAddresses,
+	[System.String]$Path,
 
-	[Parameter(Mandatory = $true)]
-	[ValidateNotNullOrEmpty()]
-	[System.String]$ClusterName,
+	[Parameter()]
+	[System.String]$DisplayName,
+
+	[Parameter()]
+	[System.String]$Description,
+
+	[Parameter()]
+	[ValidateSet("Security", "Distribution")]
+	[System.String]$GroupCategory = "Security",
+
+	[Parameter()]
+	[ValidateSet("Universal", "Global", "DomainLocal")]
+	[System.String]$GroupScope = "Global",
 
 	[Parameter(Position = 2, ParameterSetName = "Cred", Mandatory = $true)]
 	[ValidateNotNull()]
@@ -27,11 +37,7 @@ Param(
 	[System.String]$Password,
 
 	[Parameter(ParameterSetName = "EncryptedPass", Mandatory = $true)]
-	[ValidateNotNullOrEmpty()]
-	[System.String]$KMSEncryptedPassword,
-
-	[Parameter()]
-	[Switch]$IncludeS2DTest
+	[System.String]$KMSEncryptedPassword
 )
 
 Start-Transcript -Path "$env:ProgramData\Amazon\Logs\$(Split-Path -Path $MyInvocation.MyCommand.Path -Leaf).txt" -Append
@@ -61,50 +67,21 @@ if ($PSCmdlet.ParameterSetName -ne "Cred")
 if ($Credential -ne [System.Management.Automation.PSCredential]::Empty)
 {
 	$Splat.Add("Credential", $Credential)
-	$Splat.Add("ComputerName", ".")
-	$Splat.Add("Authentication", "Credssp")
 }
 
-
-
-# Depending on how the script is called, powershell may interpret a comma delimited list as a single string instead
-# of an array, in that case, break apart
-if ($Nodes.Length -eq 1)
+if (-not [System.String]::IsNullOrEmpty($Path))
 {
-	if ($Nodes[0].StartsWith("@(") -and $Nodes[0].EndsWith(")"))
-	{
-		$Nodes[0] = $Nodes[0].TrimStart("@(")
-		$Nodes[0] = $Nodes[0].TrimEnd(")")
-	}
-
-	$Nodes = $Nodes[0].Split(",")
+	$Splat.Add("Path", $Path)
 }
 
-if ($IPAddresses.Length -eq 1)
+if (-not [System.String]::IsNullOrEmpty($DisplayName))
 {
-	if ($IPAddresses[0].StartsWith("@(") -and $IPAddresses[0].EndsWith(")"))
-	{
-		$IPAddresses[0] = $IPAddresses[0].TrimStart("@(")
-		$IPAddresses[0] = $IPAddresses[0].TrimEnd(")")
-	}
-
-	$IPAddresses = $IPAddresses[0].Split(",")
+	$Splat.Add("DisplayName", $DisplayName)
 }
 
-Invoke-Command -ScriptBlock {
-	$Tests = @("Inventory", "Network", "System Configuration")
+if (-not [System.String]::IsNullOrEmpty($Description))
+{
+	$Splat.Add("Description", $Description)
+}
 
-	if ($Using:IncludeS2DTest) {
-		$Tests += "Storage Spaces Direct"
-	}
-
-	try {
-		Test-Cluster –Node $Using:Nodes –Include $Tests -ErrorAction Stop
-	}
-	catch [Exception] {
-		Write-Warning -Message $_.Exception.Message
-	}
-	
-	New-Cluster -Name $Using:ClusterName -Node $Using:Nodes -StaticAddress $Using:IPAddresses -NoStorage
-
-} @Splat
+New-ADGroup -GroupCategory $GroupCategory -GroupScope $GroupScope @Splat
