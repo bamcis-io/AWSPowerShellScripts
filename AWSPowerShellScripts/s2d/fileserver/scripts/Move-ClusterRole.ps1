@@ -1,10 +1,14 @@
 [CmdletBinding(DefaultParameterSetName = "Cred")]
 Param(
-	[Parameter()]
-	[ValidatePattern("^\\\\(?:[a-zA-Z0-9].?)+\\(?:(?:[-a-zA-Z0-9_.])+\\?)+\`$?$")]
-	[System.String]$FileShare,
+	[Parameter(Mandatory = $true)]
+	[ValidateNotNullOrEmpty()]
+	[System.String[]]$Role,
 
-	[Parameter(ParameterSetName = "Cred", Mandatory = $true)]
+	[Parameter(Mandatory = $true)]
+	[ValidateNotNullOrEmpty()]
+	[System.String]$Node,
+
+	[Parameter(Position = 2, ParameterSetName = "Cred", Mandatory = $true)]
 	[ValidateNotNull()]
 	[System.Management.Automation.Credential()]
 	[System.Management.Automation.PSCredential]$Credential = [System.Management.Automation.PSCredential]::Empty,
@@ -55,18 +59,15 @@ if ($Credential -ne [System.Management.Automation.PSCredential]::Empty)
 }
 
 Invoke-Command -ScriptBlock {
-	[System.Collections.Hashtable]$Splat = @{}
 
-	if ([System.String]::IsNullOrEmpty($Using:FileShare))
+	foreach ($SingleRole in $Using:Role)
 	{
-		$Splat.Add("NoWitness", $true) # Node majority
-	}
-	else
-	{
-		$Splat.Add("FileShareWitness", $Using:FileShare) # Node and file share majority
-	}
+		$Owner = Get-ClusterResource -Name $SingleRole | Select -ExpandProperty OwnerNode
 
-	Set-ClusterQuorum @Splat
+		if ($Owner -ine $Using:Node)
+		{
+			Move-ClusterGroup -Name $SingleRole -Node $Using:Node
+		}
+	}
 
 } @Splat
-

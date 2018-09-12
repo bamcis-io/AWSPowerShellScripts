@@ -37,6 +37,7 @@
     <Compile Include="common\scripts\Disable-CredSSP.ps1" />
     <Compile Include="common\scripts\New-ADGroup.ps1" />
     <Compile Include="common\scripts\New-ScheduledTaskAtStartup.ps1" />
+    <Compile Include="s2d\fileserver\scripts\Move-ClusterRole.ps1" />
     <Compile Include="s2d\fileserver\scripts\New-QuoromFileShare.ps1" />
     <Compile Include="common\scripts\Set-ADComputerAccountStatus.ps1" />
     <Compile Include="common\scripts\Enable-CredSSP.ps1" />

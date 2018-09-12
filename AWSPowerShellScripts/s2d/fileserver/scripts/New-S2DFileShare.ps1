@@ -85,7 +85,14 @@ else
 	$Part = $Options | Select-Object -First 1
 }
 
-[System.String]$Path = "$($Part.Partition.Path)\$Name"
+$Drive = "$($Part.Partition.Path)\"
+
+if (-not (Test-Path -Path $Drive))
+{
+	throw New-Object -TypeName System.InvalidOperationException("The current node, $env:COMPUTERNAME, does not own $Drive.")
+}
+
+[System.String]$Path = "$Drive$Name"
 
 if ((Test-Path -Path $Path) -and [System.IO.File]::Exists($Path))
 {
@@ -145,4 +152,4 @@ if ($ChangeAccess -ne $null -and $ChangeAccess.Count -gt 0)
 	Set-Acl -Path $Path -AclObject $Acl
 }
 
-New-SmbShare -Path $Path -Name $Name -EncryptData:$EncryptData -ContinuouslyAvailable $true @Splat
+New-SmbShare -Path $Path -Name $Name -EncryptData:$EncryptData -ContinuouslyAvailable $true -ScopeName $Resource @Splat
