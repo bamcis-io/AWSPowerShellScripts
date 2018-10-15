@@ -9,11 +9,15 @@ Param(
 	[System.String]$Resource,
 
 	[Parameter(Mandatory = $true, ParameterSetName = "PhysicalDisk")]
+	[Parameter(Mandatory = $true, ParameterSetName = "SOFS")]
 	[ValidateNotNullOrEmpty()]
 	[System.String]$DiskName,
 
 	[Parameter(Mandatory = $true, ParameterSetName = "Largest")]
 	[Switch]$UseLargest,
+
+	[Parameter(Mandatory = $true, ParameterSetName = "SOFS")]
+	[Switch]$SOFS,
 
 	[Parameter()]  
 	[Switch]$EncryptData,
@@ -58,41 +62,51 @@ Function Update-UserName {
 	}
 }
 
-[Microsoft.FailoverClusters.PowerShell.ClusterResource[]]$Disks = Get-ClusterGroup -Name $Resource | Get-ClusterResource | Where-Object {$_.ResourceType -eq "Physical Disk" }
+[System.String]$Path = ""
 
-if (-not [System.String]::IsNullOrEmpty($DiskName))
+if ($SOFS)
 {
-	$Disks = $Disks | Where-Object {$_.Name -ieq $DiskName} # This should just be 1 disk
-}
-
-$Options = @()
-
-foreach ($ClusterDisk in $Disks)
-{
-    $Partition = Get-CimInstance -Namespace "root/mscluster" -ClassName MSCluster_Resource -Filter "Id = '$($ClusterDisk.Id)'" | 
-		Get-CimAssociatedInstance -ResultClassName "MSCluster_Disk" | 
-		Get-CimAssociatedInstance -ResultClassName "MSCluster_DiskPartition"
-
-    $Options += [PSCustomObject]@{DiskId = $ClusterDisk.Id; Name = $ClusterDisk.Name; Partition = $Partition }
-}
-
-if ($UseLargest)
-{
-	$Part = $Options | Sort-Object -Property {$_.Partition.FreeSpace} -Descending | Select-Object -First 1
+	$Path = Get-ClusterSharedVolume -Name $DiskName | Select-Object -ExpandProperty SharedVolumeInfo | Select-Object -ExpandProperty FriendlyVolumeName
+	$Path += "\Shares\$Name"
 }
 else
 {
-	$Part = $Options | Select-Object -First 1
+	[Microsoft.FailoverClusters.PowerShell.ClusterResource[]]$Disks = Get-ClusterGroup -Name $Resource | Get-ClusterResource | Where-Object {$_.ResourceType -eq "Physical Disk" }
+
+	if (-not [System.String]::IsNullOrEmpty($DiskName))
+	{
+		$Disks = $Disks | Where-Object {$_.Name -ieq $DiskName} # This should just be 1 disk
+	}
+
+	$Options = @()
+
+	foreach ($ClusterDisk in $Disks)
+	{
+		$Partition = Get-CimInstance -Namespace "root/mscluster" -ClassName MSCluster_Resource -Filter "Id = '$($ClusterDisk.Id)'" | 
+			Get-CimAssociatedInstance -ResultClassName "MSCluster_Disk" | 
+			Get-CimAssociatedInstance -ResultClassName "MSCluster_DiskPartition"
+
+		$Options += [PSCustomObject]@{DiskId = $ClusterDisk.Id; Name = $ClusterDisk.Name; Partition = $Partition }
+	}
+
+	if ($UseLargest)
+	{
+		$Part = $Options | Sort-Object -Property {$_.Partition.FreeSpace} -Descending | Select-Object -First 1
+	}
+	else
+	{
+		$Part = $Options | Select-Object -First 1
+	}
+
+	$Drive = "$($Part.Partition.Path)\"
+
+	if (-not (Test-Path -Path $Drive))
+	{
+		throw New-Object -TypeName System.InvalidOperationException("The current node, $env:COMPUTERNAME, does not own $Drive.")
+	}
+
+	$Path = "$Drive$Name"
 }
-
-$Drive = "$($Part.Partition.Path)\"
-
-if (-not (Test-Path -Path $Drive))
-{
-	throw New-Object -TypeName System.InvalidOperationException("The current node, $env:COMPUTERNAME, does not own $Drive.")
-}
-
-[System.String]$Path = "$Drive$Name"
 
 if ((Test-Path -Path $Path) -and [System.IO.File]::Exists($Path))
 {
