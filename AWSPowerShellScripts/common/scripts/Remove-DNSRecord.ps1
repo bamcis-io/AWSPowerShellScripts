@@ -52,22 +52,39 @@ if ($Credential -ne [System.Management.Automation.PSCredential]::Empty)
 	$Splat.Add("Credential", $Credential)
 }
 
+try {
 
-$DomainName = Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty Domain
-$DnsServer = Get-DnsClientServerAddress
-    
-$Cim = New-CimSession -ComputerName $DnsServer @Splat
+	$DomainName = Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty Domain
+	$DNSServer = Get-ADDomainController -ForceDiscover -Discover -DomainName $DomainName | Select-Object -First 1 -ExpandProperty HostName
+	$Session = New-CimSession -ComputerName $DNSServer @Splat 
 
-foreach ($Item in $Record)
-{
-	try
+	foreach ($Item in $Record)
 	{
-		Get-DnsServerResourceRecord -Name $Item -ZoneName $DomainName -CimSession $Cim | Remove-DnsServerResourceRecord -ZoneName $DomainName -CimSession $Cim -Force -Confirm:$false
+		try
+		{
+			Write-Host "Retrieving records for $Item"
+
+			[Microsoft.Management.Infrastructure.CimInstance[]]$Records = Get-DnsServerResourceRecord -Name $Item -ZoneName $DomainName -CimSession $Session -ErrorAction SilentlyContinue
+
+			if ($Records -ne $null -and $Records.Length -gt 0)
+			{
+				Write-Host "Removed DNS Records:"
+				$Records | Remove-DnsServerResourceRecord -ZoneName $DomainName -CimSession $Session -Force -Confirm:$false -PassThru
+			}
+			else
+			{
+				Write-Host "No DNS records for $Item to remove."
+			}
+		}
+		catch [Exception]
+		{
+			Write-Warning -Message "Could not remove records for $Item`: $($_.Exception.Message)"
+		}
 	}
-	catch [Exception]
-	{
-		Write-Warning -Message "Could not remove records for $Item`: $($_.Exception.Message)"
-	}
+
+	Remove-CimSession -CimSession $Session
 }
-
-Remove-CimSession -CimSession $Cim
+catch [Exception] 
+{
+	Write-Warning -Message "Error during removal process: $($_.Exception.Message).`r`n$($_.Exception.StackTrace)"
+}

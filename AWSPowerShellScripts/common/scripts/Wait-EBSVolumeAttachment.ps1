@@ -24,7 +24,7 @@ if ($PSCmdlet.ParameterSetName -eq "CFN")
 				@{ Name = "resource-id"; Values = $InstanceId},
 				@{ Name = "resource-type"; Values = "instance"},
 				@{ Name = "key"; Values = "aws:cloudformation:stack-name"}
-			) -MaxResult 1 | Select-Object -First 1 -ExpandProperty Value
+			) | Select-Object -First 1 -ExpandProperty Value
 	}
 
 	foreach ($Vol in $CFNLogicalVolumeIds)

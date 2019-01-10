@@ -34,6 +34,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="common\scripts\Add-ADObjectToGroup.ps1" />
+    <Compile Include="common\scripts\Attach-EBSVolume.ps1" />
     <Compile Include="common\scripts\Disable-CredSSP.ps1" />
     <Compile Include="common\scripts\Install-DnsPowerShell.ps1" />
     <Compile Include="common\scripts\New-ADGroup.ps1" />
