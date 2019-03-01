@@ -10,11 +10,17 @@ Param(
 
 	[Parameter(Position = 0, ParameterSetName = "Vol")]
 	[ValidateNotNull()]
-	[System.String[]]$VolumeIds = @()
+	[System.String[]]$VolumeIds = @(),
+
+	[Parameter()]
+	[ValidateRange(1, [System.Int32]::MaxValue)]
+	[System.Int32]$Timeout = 120
 )
 
 Start-Transcript -Path "$env:ProgramData\Amazon\Logs\$(Split-Path -Path $MyInvocation.MyCommand.Path -Leaf).txt" -Append
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+
+[System.String]$InstanceId = Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" | Select-Object -ExpandProperty Content
 
 if ($PSCmdlet.ParameterSetName -eq "CFN")
 {
@@ -29,9 +35,9 @@ if ($PSCmdlet.ParameterSetName -eq "CFN")
 
 	foreach ($Vol in $CFNLogicalVolumeIds)
 	{
-		$Counter = 0
+		[System.Diagnostics.Stopwatch]$SW = [System.Diagnostics.Stopwatch]::StartNew()
 
-		while ($true -and $Counter -lt 120) {
+		while ($SW.Elapsed.TotalSeconds -lt $Timeout) {
 			try {
 				[Amazon.CloudFormation.Model.StackResourceDetail]$Resource = Get-CFNStackResource -StackName $StackName -LogicalResourceId $Vol
 
@@ -42,6 +48,7 @@ if ($PSCmdlet.ParameterSetName -eq "CFN")
 				else
 				{
 					$VolumeIds += $Resource.PhysicalResourceId
+					$SW.Stop()
 					break
 				}
 			}
@@ -56,11 +63,9 @@ if ($PSCmdlet.ParameterSetName -eq "CFN")
 					throw $_.Exception
 				}
 			}
-
-			$Counter++
 		}
 
-		if ($Counter -ge 120)
+		if ($SW.Elapsed.TotalSeconds -gt $Timeout)
 		{
 			$Message = "The wait time for volume $Vol to be created in CFN has expired, it has not been added to be awaited for."
 			Write-Warning -Message $Message
@@ -68,8 +73,6 @@ if ($PSCmdlet.ParameterSetName -eq "CFN")
 		}
 	}
 }
-
-[System.String]$InstanceId = Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" | Select-Object -ExpandProperty Content
 
 $ShouldContinue = $true
 
